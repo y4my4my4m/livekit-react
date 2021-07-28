@@ -10,8 +10,8 @@
     "eject": "node ../node_modules/react-scripts/bin/react-scripts.js eject"
   },
   "dependencies": {
-    "livekit-react": "link:..",
-    "livekit-client": "link:../node_modules/livekit-client",
+    "livekit-client": "^0.10.1",
+    "livekit-react": "^0.3.13",
     "react": "link:../node_modules/react",
     "react-aspect-ratio": "^1.0.49",
     "react-dom": "link:../node_modules/react-dom",

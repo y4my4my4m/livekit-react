@@ -1,10 +1,11 @@
 import { faUserFriends } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { CreateAudioTrackOptions, createLocalAudioTrack, createLocalVideoTrack, CreateVideoTrackOptions, Room, RoomEvent, TrackPublishOptions } from 'livekit-client'
+import { CreateAudioTrackOptions, createLocalAudioTrack, createLocalVideoTrack, CreateVideoTrackOptions, Room, RoomEvent, TrackPublishOptions, DataPacket_Kind, Participant } from 'livekit-client'
 import { LiveKitRoom } from 'livekit-react'
 import React, { useState } from "react"
 import "react-aspect-ratio/aspect-ratio.css"
 import { useHistory, useLocation } from 'react-router-dom'
+import { useMousePosition } from "./useMousePosition"
 
 export const RoomPage = () => {
   const [numParticipants, setNumParticipants] = useState(0)
@@ -13,6 +14,8 @@ export const RoomPage = () => {
   const url = query.get('url')
   const token = query.get('token')
   const recorder = query.get('recorder')
+
+  const position = useMousePosition();
 
   if (!url || !token) {
     return (
@@ -28,13 +31,14 @@ export const RoomPage = () => {
     })
   }
 
+
   const updateParticipantSize = (room: Room) => {
     setNumParticipants(room.participants.size + 1);
   }
 
   const onParticipantDisconnected = (room: Room) => {
     updateParticipantSize(room)
-    
+
     /* Special rule for recorder */
     if (recorder && parseInt(recorder, 10) === 1 && room.participants.size === 0) {
       console.log("END_RECORDING")
@@ -44,7 +48,10 @@ export const RoomPage = () => {
   return (
     <div className="roomContainer">
       <div className="topBar">
-        <h2>LiveKit Video</h2>
+        <h1>
+        bellFace LiveKit Video<br/>
+        My cursor: {position.x}:{position.y}
+        </h1>
         <div className="participantCount">
           <FontAwesomeIcon icon={faUserFriends} />
           <span>{numParticipants}</span>
@@ -94,6 +101,21 @@ async function onConnected(room: Room, query: URLSearchParams) {
     }
     await room.localParticipant.publishTrack(videoTrack, publishOptions)
   }
+
+  const strData = JSON.stringify({some: "data"})
+  const encoder = new TextEncoder()
+  const decoder = new TextDecoder()
+
+  const data = encoder.encode(strData);
+  room.localParticipant.publishData(data, DataPacket_Kind.RELIABLE);
+
+  room.on(RoomEvent.DataReceived, (payload: Uint8Array, participant: Participant, kind: DataPacket_Kind) => {
+    const strData = decoder.decode(payload)
+
+    console.log(strData);
+    console.log(participant);
+    console.log(kind);
+  });
 }
 
 function isSet(query: URLSearchParams, key: string): boolean {
